@@ -6,7 +6,7 @@
 <title>For Fadilah</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@400..700&family=Poppins:wght@300;400;500;600&family=Caveat:wght@500;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400;1,600&family=Poppins:wght@300;400;500;600;700&family=Reem+Kufi:wght@400..700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -35,12 +35,19 @@ function specialBannerText() {
 }
 
 function Stars() {
-  return <div className="stars" aria-hidden="true"></div>;
+  return (
+    <div className="stars" aria-hidden="true">
+      <div className="ambient-glow ambient-glow-1"></div>
+      <div className="ambient-glow ambient-glow-2"></div>
+      <div className="ambient-glow ambient-glow-3"></div>
+    </div>
+  );
 }
 
 const DuaPlayer = forwardRef(function DuaPlayer(props, ref) {
   const playerRef = useRef(null);
   const containerRef = useRef(null);
+  const [isPlayingSound, setIsPlayingSound] = useState(false);
   const videoId = CONFIG.duaVideoId;
 
   useEffect(() => {
@@ -61,7 +68,15 @@ const DuaPlayer = forwardRef(function DuaPlayer(props, ref) {
           modestbranding: 1,
         },
         events: {
-          onReady: function (e) { e.target.playVideo(); },
+          onReady: function (e) { 
+            e.target.playVideo(); 
+          },
+          onStateChange: function (e) {
+            if (e.data === window.YT.PlayerState.PLAYING) {
+              const muted = playerRef.current && playerRef.current.isMuted();
+              setIsPlayingSound(!muted);
+            }
+          }
         },
       });
     }
@@ -76,6 +91,20 @@ const DuaPlayer = forwardRef(function DuaPlayer(props, ref) {
     }
   }, [videoId]);
 
+  function toggleMute() {
+    const player = playerRef.current;
+    if (!player) return;
+    if (player.isMuted()) {
+      player.unMute();
+      player.setVolume(70);
+      player.playVideo();
+      setIsPlayingSound(true);
+    } else {
+      player.mute();
+      setIsPlayingSound(false);
+    }
+  }
+
   useImperativeHandle(ref, () => ({
     unmute() {
       const player = playerRef.current;
@@ -83,6 +112,7 @@ const DuaPlayer = forwardRef(function DuaPlayer(props, ref) {
       player.unMute();
       player.setVolume(70);
       player.playVideo();
+      setIsPlayingSound(true);
     },
   }));
 
@@ -91,62 +121,116 @@ const DuaPlayer = forwardRef(function DuaPlayer(props, ref) {
   return (
     <div className="dua-player">
       <div className="dua-player-hidden"><div ref={containerRef}></div></div>
-      <div className="dua-badge" title="A dua is playing softly">
-        <svg viewBox="0 0 100 24" className="dua-wave" aria-hidden="true">
-          <path
-            d="M2 12 h14 l4 -8 l5 16 l4 -18 l4 20 l4 -14 l4 6 h14 l4 -6 l4 10 h13"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-        <span className="dua-heart">🩷</span>
-      </div>
+      <button 
+        className={"dua-badge" + (isPlayingSound ? " is-playing" : "")} 
+        onClick={toggleMute}
+        title={isPlayingSound ? "Dua is playing softly (Click to mute)" : "Click to play background dua"}
+        aria-label="Toggle background dua sound"
+      >
+        <span className="dua-bars" aria-hidden="true">
+          <span className="dua-bar"></span>
+          <span className="dua-bar"></span>
+          <span className="dua-bar"></span>
+          <span className="dua-bar"></span>
+        </span>
+        <span className="dua-text">Dua</span>
+        <span className="dua-heart">🌸</span>
+      </button>
     </div>
   );
 });
 
 function AchievementScreen({ onNext }) {
-  const today = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const today = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
   return (
     <section className="screen achievement-screen active">
       <div className="achievement-card">
-        <div className="achievement-icon">
-          <span className="achievement-heart">❤️</span>
+        <div className="achievement-icon-wrapper">
+          <div className="achievement-pulse-ring"></div>
+          <div className="achievement-pulse-ring delay-1"></div>
+          <div className="achievement-icon">
+            <span className="achievement-heart">🤍</span>
+          </div>
         </div>
+        <span className="achievement-pill">Special Keepsake</span>
         <h1 className="achievement-title">For My Fadilah</h1>
-        <p className="achievement-subtitle">Earned through every day we've shared</p>
-        <p className="achievement-date">{today}</p>
+        <p className="achievement-subtitle">Earned through every blessed day we have shared</p>
+        <p className="achievement-date">✦ {today} ✦</p>
         <p className="achievement-desc">
           A little surprise made just for you, with everything I couldn't fully say out loud.
         </p>
-        <button className="achievement-next" onClick={onNext}>Next <span>→</span></button>
+        <button className="achievement-next" onClick={onNext}>
+          <span>Open Surprise</span>
+          <span className="arrow-icon">→</span>
+        </button>
       </div>
     </section>
   );
 }
 
 function GateScreen({ onBegin, banner }) {
-  const bgStyle = CONFIG.gateBackground
-    ? {
-        backgroundImage:
-          "linear-gradient(rgba(0,0,0,0.05), rgba(0,0,0,0.15)), url('" +
-          CONFIG.gateBackground +
-          "')",
-        backgroundSize: "cover",
-        backgroundPosition: "center 15%",
-      }
-    : {};
+  const bgPhoto = CONFIG.gateBackground || "images/splash.jpg";
 
   return (
-    <section className="screen screen-gate active" style={bgStyle}>
-      <div className="gate-content">
-        <h1 className="gate-heading">Assalamu Alaikum, {CONFIG.herName}</h1>
-        {banner && <p className="special-banner">{banner}</p>}
-        <p className="subtitle gate-subtitle">A little something made just for you.</p>
-        <button className="btn-primary" onClick={onBegin}>Begin</button>
+    <section className="screen screen-gate active">
+      {/* Ambient background blur for wide displays */}
+      <div
+        className="gate-bg-ambient"
+        style={{ backgroundImage: `url('${bgPhoto}')` }}
+        aria-hidden="true"
+      />
+      <div className="gate-overlay" aria-hidden="true" />
+      
+      {/* Floating ambient aesthetic particles */}
+      <div className="gate-particles" aria-hidden="true">
+        <span className="gate-float-item" style={{ top: "12%", left: "8%", animationDelay: "0s" }}>🤍</span>
+        <span className="gate-float-item" style={{ top: "22%", right: "10%", animationDelay: "1.8s" }}>✨</span>
+        <span className="gate-float-item" style={{ bottom: "18%", left: "12%", animationDelay: "3.2s" }}>🌸</span>
+        <span className="gate-float-item" style={{ bottom: "24%", right: "12%", animationDelay: "2.4s" }}>💫</span>
+      </div>
+
+      <div className="gate-container">
+        <div className="gate-showcase-card">
+          {/* Photo frame showcase */}
+          <div className="gate-photo-column">
+            <div className="gate-photo-frame">
+              <img src={bgPhoto} alt="Our trip" className="gate-photo-img" />
+              <div className="gate-photo-sheen"></div>
+              <div className="gate-photo-badge">
+                <span className="gate-badge-dot"></span>
+                <span>Our special memory 🤍</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Greeting and call to action column */}
+          <div className="gate-details-column">
+            <div className="gate-arabic-greeting">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+            
+            <div className="gate-heading-wrap">
+              <span className="gate-pretitle">Assalamu Alaikum,</span>
+              <h1 className="gate-her-name">{CONFIG.herName}</h1>
+            </div>
+
+            {banner && (
+              <div className="gate-banner-pill">
+                <span className="gate-banner-sparkle">✨</span>
+                <span>{banner}</span>
+              </div>
+            )}
+
+            <p className="gate-romantic-sub">
+              A little space crafted with all my love, prayers, and our dearest memories — made just for you.
+            </p>
+
+            <div className="gate-action-wrap">
+              <button className="btn-begin-luxury" onClick={onBegin}>
+                <span>Begin</span>
+                <span className="btn-begin-arrow">✦</span>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -156,7 +240,7 @@ function renderFormatted(text) {
   return String(text || "")
     .split(/\n\n+/)
     .map((para, pi) => (
-      <p className="welcome-para" key={pi} style={{ animationDelay: pi * 220 + "ms" }}>
+      <p className="welcome-para" key={pi} style={{ animationDelay: (pi * 150 + 200) + "ms" }}>
         {para.split(/\*\*(.+?)\*\*/g).map((chunk, ci) =>
           ci % 2 === 1 ? <strong key={ci}>{chunk}</strong> : chunk
         )}
@@ -166,18 +250,28 @@ function renderFormatted(text) {
 
 function WelcomeScreen({ banner, onEnter }) {
   return (
-    <section className="screen active">
-      <div className="card wide">
+    <section className="screen active welcome-screen-bg">
+      <div className="card wide welcome-card">
         <ConfettiShower />
-        {CONFIG.welcomePhoto ? (
-          <img className="welcome-photo" src={CONFIG.welcomePhoto} alt="" />
-        ) : (
-          <div className="crescent">✦</div>
-        )}
-        <h1>My {CONFIG.herName}</h1>
-        {banner && <p className="special-banner">{banner}</p>}
-        <div className="welcome-message">{renderFormatted(CONFIG.welcomeMessage)}</div>
-        <button className="btn-primary" onClick={onEnter}>Enter</button>
+        <div className="welcome-avatar-wrap">
+          {CONFIG.welcomePhoto ? (
+            <div className="welcome-photo-ring">
+              <img className="welcome-photo" src={CONFIG.welcomePhoto} alt={CONFIG.herName} />
+            </div>
+          ) : (
+            <div className="crescent">✦</div>
+          )}
+        </div>
+        <span className="welcome-tag">Dearest Fadilah</span>
+        <h1 className="welcome-title">My {CONFIG.herName} 🤍</h1>
+        {banner && <div className="special-banner">{banner}</div>}
+        <div className="welcome-message-box">
+          {renderFormatted(CONFIG.welcomeMessage)}
+        </div>
+        <button className="btn-primary welcome-enter-btn" onClick={onEnter}>
+          <span>Enter Our Journey</span>
+          <span className="btn-arrow">→</span>
+        </button>
       </div>
     </section>
   );
@@ -186,11 +280,13 @@ function WelcomeScreen({ banner, onEnter }) {
 function HeartsIntroScreen({ onNext }) {
   return (
     <section className="screen intro-scroll-screen active">
-      <div className="card wide">
+      <div className="card wide intro-card">
         <HeartsGame />
-      </div>
-      <div className="intro-continue-bar">
-        <button className="btn-primary" onClick={onNext}>Continue ✦</button>
+        <div className="intro-card-footer">
+          <button className="btn-primary" onClick={onNext}>
+            <span>Continue ✦</span>
+          </button>
+        </div>
       </div>
     </section>
   );
@@ -199,11 +295,13 @@ function HeartsIntroScreen({ onNext }) {
 function ChatsIntroScreen({ onNext }) {
   return (
     <section className="screen intro-scroll-screen active">
-      <div className="card wide">
+      <div className="card wide intro-card">
         <ChatsTab />
-      </div>
-      <div className="intro-continue-bar">
-        <button className="btn-primary" onClick={onNext}>Continue ✦</button>
+        <div className="intro-card-footer">
+          <button className="btn-primary" onClick={onNext}>
+            <span>Continue ✦</span>
+          </button>
+        </div>
       </div>
     </section>
   );
@@ -211,15 +309,15 @@ function ChatsIntroScreen({ onNext }) {
 
 function ConfettiShower() {
   const pieces = useMemo(() => {
-    const colors = ["var(--pink)", "var(--pink-deep)", "var(--pink-soft)", "#ffffff"];
-    return Array.from({ length: 26 }).map((_, i) => ({
+    const colors = ["#ec4899", "#be185d", "#f472b6", "#fb7185", "#ffffff", "#fbcfe8"];
+    return Array.from({ length: 30 }).map((_, i) => ({
       id: i,
       left: Math.round(Math.random() * 96),
       delay: (Math.random() * 3).toFixed(2),
-      duration: (2.6 + Math.random() * 2.2).toFixed(2),
-      size: Math.round(5 + Math.random() * 4),
+      duration: (2.8 + Math.random() * 2.2).toFixed(2),
+      size: Math.round(5 + Math.random() * 5),
       color: colors[i % colors.length],
-      isBalloon: i % 5 === 0,
+      isBalloon: i % 6 === 0,
     }));
   }, []);
 
@@ -247,7 +345,7 @@ function ConfettiShower() {
               animationDuration: p.duration + "s",
               background: p.color,
               width: p.size + "px",
-              height: Math.round(p.size * 1.6) + "px",
+              height: Math.round(p.size * 1.5) + "px",
             }}
           />
         )
@@ -276,20 +374,25 @@ function VideoScreen({ srcs, onDone }) {
 
   return (
     <section className="screen video-screen active">
-      <video
-        ref={videoRef}
-        key={index}
-        className="intro-video"
-        src={list[index]}
-        controls
-        muted
-        playsInline
-        onEnded={handleEnded}
-      />
-      {list.length > 1 && (
-        <p className="video-progress">{index + 1} / {list.length}</p>
-      )}
-      <button className="video-continue" onClick={onDone}>Skip ✦</button>
+      <div className="video-cinema-wrap">
+        <video
+          ref={videoRef}
+          key={index}
+          className="intro-video"
+          src={list[index]}
+          controls
+          playsInline
+          onEnded={handleEnded}
+        />
+        {list.length > 1 && (
+          <div className="video-progress-pill">
+            <span>Video {index + 1} of {list.length}</span>
+          </div>
+        )}
+      </div>
+      <button className="video-continue" onClick={onDone}>
+        <span>Skip to App ✦</span>
+      </button>
     </section>
   );
 }
@@ -299,6 +402,7 @@ const VIDEO_EXT = /\.(mp4|webm|mov)$/i;
 function PhotoCard({ photo, onOpen }) {
   const ref = useRef(null);
   const [visible, setVisible] = useState(false);
+  const [liked, setLiked] = useState(false);
   const isVideo = VIDEO_EXT.test(photo.src);
 
   useEffect(() => {
@@ -313,7 +417,7 @@ function PhotoCard({ photo, onOpen }) {
           }
         });
       },
-      { threshold: 0.15, rootMargin: "0px 0px -30px 0px" }
+      { threshold: 0.1, rootMargin: "0px 0px 50px 0px" }
     );
     obs.observe(el);
     return () => obs.disconnect();
@@ -321,12 +425,31 @@ function PhotoCard({ photo, onOpen }) {
 
   return (
     <div ref={ref} className={"photo-card" + (visible ? " in-view" : "")}>
-      {isVideo ? (
-        <video src={photo.src} controls playsInline preload="metadata" />
-      ) : (
-        <img src={photo.src} alt={photo.caption || ""} loading="lazy" onClick={() => onOpen(photo)} />
-      )}
-      <div className="photo-caption">{photo.caption || ""}</div>
+      <div className="photo-card-inner">
+        {isVideo ? (
+          <div className="photo-media-wrapper">
+            <video src={photo.src} controls playsInline preload="metadata" />
+          </div>
+        ) : (
+          <div className="photo-media-wrapper" onClick={() => onOpen(photo)}>
+            <img src={photo.src} alt={photo.caption || "Memory"} loading="lazy" />
+            <div className="photo-hover-overlay">
+              <span className="photo-zoom-icon">🔍</span>
+            </div>
+          </div>
+        )}
+        <button 
+          className={"photo-like-btn" + (liked ? " liked" : "")} 
+          onClick={(e) => { e.stopPropagation(); setLiked(!liked); }}
+          title={liked ? "Liked!" : "Love this"}
+          aria-label="Love this photo"
+        >
+          {liked ? "❤️" : "🤍"}
+        </button>
+      </div>
+      {photo.caption ? (
+        <div className="photo-caption">{photo.caption}</div>
+      ) : null}
     </div>
   );
 }
@@ -335,9 +458,28 @@ function MemoriesTab() {
   const photos = CONFIG.photos || [];
   const [lightbox, setLightbox] = useState(null);
 
+  useEffect(() => {
+    function handleKeyDown(e) {
+      if (!lightbox) return;
+      if (e.key === "Escape") setLightbox(null);
+      if (e.key === "ArrowRight") {
+        const idx = photos.findIndex((p) => p.src === lightbox.src);
+        if (idx !== -1 && idx < photos.length - 1) setLightbox(photos[idx + 1]);
+      }
+      if (e.key === "ArrowLeft") {
+        const idx = photos.findIndex((p) => p.src === lightbox.src);
+        if (idx > 0) setLightbox(photos[idx - 1]);
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [lightbox, photos]);
+
   if (photos.length === 0) {
     return <p className="empty-hint">No photos added yet — habibi will add them soon, insha'Allah.</p>;
   }
+
+  const currentIdx = lightbox ? photos.findIndex((p) => p.src === lightbox.src) : -1;
 
   return (
     <>
@@ -348,9 +490,35 @@ function MemoriesTab() {
       </div>
       {lightbox && ReactDOM.createPortal(
         <div className="lightbox" onClick={() => setLightbox(null)}>
-          <button className="lightbox-close" onClick={() => setLightbox(null)}>✕</button>
-          <img src={lightbox.src} alt={lightbox.caption || ""} onClick={(e) => e.stopPropagation()} />
-          {lightbox.caption && <p className="lightbox-caption">{lightbox.caption}</p>}
+          <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
+            <button className="lightbox-close" onClick={() => setLightbox(null)} aria-label="Close">✕</button>
+            
+            {currentIdx > 0 && (
+              <button 
+                className="lightbox-nav lightbox-prev" 
+                onClick={() => setLightbox(photos[currentIdx - 1])}
+                aria-label="Previous photo"
+              >
+                ‹
+              </button>
+            )}
+
+            <div className="lightbox-img-wrapper">
+              <img src={lightbox.src} alt={lightbox.caption || ""} />
+            </div>
+
+            {currentIdx < photos.length - 1 && (
+              <button 
+                className="lightbox-nav lightbox-next" 
+                onClick={() => setLightbox(photos[currentIdx + 1])}
+                aria-label="Next photo"
+              >
+                ›
+              </button>
+            )}
+
+            {lightbox.caption && <p className="lightbox-caption">{lightbox.caption}</p>}
+          </div>
         </div>,
         document.body
       )}
@@ -362,15 +530,27 @@ function LetterTab() {
   const letter = CONFIG.letter;
   if (!letter) return null;
   return (
-    <div className="letter">
-      {letter.photo && (
-        <div className="polaroid">
-          <img src={letter.photo} alt="" />
+    <div className="letter-wrapper">
+      <div className="letter-parchment">
+        <div className="letter-seal">🤍</div>
+        {letter.photo && (
+          <div className="polaroid-wrapper">
+            <div className="polaroid">
+              <div className="polaroid-tape"></div>
+              <img src={letter.photo} alt="First time" />
+              <span className="polaroid-caption">August 15, 2022 🤍</span>
+            </div>
+          </div>
+        )}
+        <h2 className="letter-greeting">{letter.greeting}</h2>
+        <div className="letter-body-content">
+          {letter.body.split(/\n\n+/).map((para, i) => (
+            <p className="letter-p" key={i}>{para}</p>
+          ))}
         </div>
-      )}
-      <p className="letter-greeting">{letter.greeting}</p>
-      <p className="letter-body">{letter.body}</p>
-      <p className="letter-signature">{letter.signature}</p>
+        <p className="letter-signature">{letter.signature}</p>
+        <div className="letter-footer-note">✦ Sealed with love and dua ✦</div>
+      </div>
     </div>
   );
 }
@@ -381,10 +561,10 @@ function HeartsGame() {
     reasons.map((reason, i) => ({
       id: i,
       reason,
-      left: 6 + Math.random() * 80,
-      top: 6 + Math.random() * 68,
+      left: 8 + (i % 4) * 22 + (Math.random() * 8 - 4),
+      top: 12 + Math.floor(i / 4) * 38 + (Math.random() * 10 - 5),
       delay: (Math.random() * 2).toFixed(2),
-      duration: (3 + Math.random() * 2).toFixed(2),
+      duration: (3.2 + Math.random() * 1.8).toFixed(2),
     }))
   );
   const [popped, setPopped] = useState({});
@@ -400,36 +580,56 @@ function HeartsGame() {
   const remaining = reasons.length - revealed.length;
 
   return (
-    <>
-      <h2 className="panel-title">Pop a Heart 💗</h2>
+    <div className="hearts-game-container">
+      <h2 className="panel-title">Reasons I Love You 💖</h2>
       <p className="panel-subtitle">
-        {remaining > 0 ? "Tap each heart to find a reason I love you" : "You found them all 🤍"}
+        {remaining > 0 
+          ? `Tap the floating hearts to reveal secrets (${revealed.length} of ${reasons.length} discovered)`
+          : "You found all the reasons! Every single one is true 🤍"}
       </p>
+      
+      <div className="hearts-progress-bar">
+        <div 
+          className="hearts-progress-fill" 
+          style={{ width: `${(revealed.length / reasons.length) * 100}%` }}
+        />
+      </div>
+
       <div className="hearts-field">
         {hearts.map((h) => (
           <button
             key={h.id}
             className={"floating-heart" + (popped[h.id] ? " popped" : "")}
-            style={
-              popped[h.id]
-                ? { left: h.left + "%", top: h.top + "%" }
-                : { left: h.left + "%", top: h.top + "%", animationDuration: h.duration + "s", animationDelay: h.delay + "s" }
-            }
+            style={{
+              left: h.left + "%",
+              top: h.top + "%",
+              animationDuration: h.duration + "s",
+              animationDelay: h.delay + "s",
+            }}
             onClick={() => pop(h)}
             aria-label="Pop a heart"
           >
-            💗
+            <span className="heart-emoji">💗</span>
+            <span className="heart-sparkle-dot"></span>
           </button>
         ))}
       </div>
+
       {revealed.length > 0 && (
-        <ul className="revealed-list">
-          {revealed.map((r, i) => (
-            <li key={i} className="revealed-item">{r}</li>
-          ))}
-        </ul>
+        <div className="revealed-section">
+          <h3 className="revealed-heading">Discovered Secrets 💌</h3>
+          <ul className="revealed-list">
+            {revealed.map((r, i) => (
+              <li key={i} className="revealed-item">
+                <span className="revealed-number">{i + 1}</span>
+                <span className="revealed-text">{r}</span>
+                <span className="revealed-heart-icon">🤍</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
-    </>
+    </div>
   );
 }
 
@@ -470,24 +670,37 @@ function ChatsCarousel({ snippets }) {
             key={i}
             ref={(el) => (itemRefs.current[i] = el)}
           >
-            {s.image ? (
-              <img className="chat-screenshot" src={s.image} alt={s.text || ""} />
-            ) : (
-              <div className={"chat-bubble" + (s.from === "her" ? " chat-bubble-her" : "")}>{s.text}</div>
-            )}
+            <div className="chat-card-wrap">
+              {s.image ? (
+                <img className="chat-screenshot" src={s.image} alt={s.text || "Chat memory"} />
+              ) : (
+                <div className={"chat-bubble" + (s.from === "her" ? " chat-bubble-her" : "")}>{s.text}</div>
+              )}
+            </div>
           </div>
         ))}
       </div>
       <div className="carousel-controls">
-        <button className="carousel-arrow" onClick={() => goTo(active - 1)} disabled={active === 0} aria-label="Previous">‹</button>
+        <button 
+          className="carousel-arrow" 
+          onClick={() => goTo(Math.max(0, active - 1))} 
+          disabled={active === 0} 
+          aria-label="Previous"
+        >
+          ‹
+        </button>
         <div className="carousel-dots">
           {snippets.map((_, i) => (
-            <span key={i} className={"carousel-dot" + (i === active ? " active" : "")} onClick={() => goTo(i)}></span>
+            <span 
+              key={i} 
+              className={"carousel-dot" + (i === active ? " active" : "")} 
+              onClick={() => goTo(i)}
+            />
           ))}
         </div>
         <button
           className="carousel-arrow"
-          onClick={() => goTo(active + 1)}
+          onClick={() => goTo(Math.min(snippets.length - 1, active + 1))}
           disabled={active === snippets.length - 1}
           aria-label="Next"
         >
@@ -513,6 +726,7 @@ function ChatsTab() {
   return (
     <>
       <h2 className="panel-title chats-heading">Us, In Our Own Words <span className="chats-heading-icon">💌</span></h2>
+      <p className="panel-subtitle">Snippets of chats that always make me smile</p>
       <ChatsCarousel snippets={snippets} />
     </>
   );
@@ -553,29 +767,39 @@ function WishlistTab() {
   }
 
   return (
-    <>
-      <h2 className="panel-title">Your Wishlist</h2>
-      <p className="panel-subtitle">Add anything you wish for, big or small.</p>
+    <div className="wishlist-container">
+      <h2 className="panel-title">Our Wishlist & Dreams 🌟</h2>
+      <p className="panel-subtitle">Places we will go, things we will do, insha'Allah.</p>
+      
       <form className="wishlist-form" onSubmit={addWish}>
         <input
           type="text"
-          placeholder="I wish for..."
+          placeholder="Add a new dream or wish..."
           autoComplete="off"
           value={input}
           onChange={(e) => setInput(e.target.value)}
         />
-        <button type="submit" className="btn-primary small">Add</button>
+        <button type="submit" className="btn-primary small">
+          <span>Add Wish ✦</span>
+        </button>
       </form>
+
       <ul className="wishlist-list">
         {wishes.map((wish, i) => (
           <li key={i} className={wish.done ? "done" : ""}>
-            <button className={"wish-check" + (wish.done ? " checked" : "")} onClick={() => toggle(i)}></button>
+            <button 
+              className={"wish-check" + (wish.done ? " checked" : "")} 
+              onClick={() => toggle(i)}
+              aria-label="Toggle completed"
+            >
+              {wish.done ? "✓" : ""}
+            </button>
             <span className="wish-text">{wish.text}</span>
-            <button className="wish-remove" onClick={() => remove(i)}>✕</button>
+            <button className="wish-remove" onClick={() => remove(i)} title="Remove wish" aria-label="Remove">✕</button>
           </li>
         ))}
       </ul>
-    </>
+    </div>
   );
 }
 
@@ -583,23 +807,36 @@ function NasheedsTab({ current, onPlay }) {
   const nasheeds = CONFIG.nasheeds || [];
   if (nasheeds.length === 0) {
     return (
-      <>
-        <h2 className="panel-title">Nasheeds For You</h2>
+      <div className="nasheeds-wrapper">
+        <h2 className="panel-title">Nasheeds For You 🎵</h2>
         <p className="empty-hint">No songs added yet — check back soon, insha'Allah.</p>
-      </>
+      </div>
     );
   }
   return (
-    <>
-      <h2 className="panel-title">Nasheeds For You</h2>
+    <div className="nasheeds-wrapper">
+      <h2 className="panel-title">Nasheeds For You 🎵</h2>
+      <p className="panel-subtitle">Peaceful melodies to soothe the heart</p>
       <ul className="nasheed-list">
         {nasheeds.map((track, i) => (
           <li key={i} className={i === current ? "playing" : ""} onClick={() => onPlay(i)}>
-            {track.title}
+            <div className="nasheed-track-left">
+              <span className="track-number">{i + 1}</span>
+              <span className="track-title">{track.title}</span>
+            </div>
+            <div className="nasheed-track-right">
+              {i === current ? (
+                <span className="playing-indicator">
+                  <span></span><span></span><span></span>
+                </span>
+              ) : (
+                <span className="play-icon">▶</span>
+              )}
+            </div>
           </li>
         ))}
       </ul>
-    </>
+    </div>
   );
 }
 
@@ -607,12 +844,16 @@ function MiniPlayer({ current, isPlaying, progress, title, onToggle, onNext }) {
   if (current === -1) return null;
   return (
     <div className="mini-player">
-      <button className="player-toggle" onClick={onToggle}>{isPlaying ? "⏸" : "▶"}</button>
+      <button className="player-toggle" onClick={onToggle} aria-label={isPlaying ? "Pause" : "Play"}>
+        {isPlaying ? "⏸" : "▶"}
+      </button>
       <div className="player-info">
         <div className="player-title">{title}</div>
-        <div className="player-bar"><div className="player-progress" style={{ width: progress + "%" }}></div></div>
+        <div className="player-bar">
+          <div className="player-progress" style={{ width: progress + "%" }}></div>
+        </div>
       </div>
-      <button className="player-next" onClick={onNext}>⏭</button>
+      <button className="player-next" onClick={onNext} aria-label="Next track">⏭</button>
     </div>
   );
 }
@@ -660,28 +901,43 @@ function MainApp({ banner }) {
   return (
     <div className="app active">
       <header className="app-header">
-        <span className="app-title">✦ For Fadilah ✦</span>
-        {banner && <p className="app-banner">{banner}</p>}
+        <div className="app-brand-pill">
+          <span className="app-title">✦ For Fadilah ✦</span>
+        </div>
+        {banner && <div className="app-banner">{banner}</div>}
         <nav className="tabs">
-          <button className={"tab-btn" + (tab === "memories" ? " active" : "")} onClick={() => setTab("memories")}>Memories</button>
+          <button className={"tab-btn" + (tab === "memories" ? " active" : "")} onClick={() => setTab("memories")}>
+            <span className="tab-icon">📸</span> Memories
+          </button>
           {CONFIG.letter && (
-            <button className={"tab-btn" + (tab === "letter" ? " active" : "")} onClick={() => setTab("letter")}>Letter</button>
+            <button className={"tab-btn" + (tab === "letter" ? " active" : "")} onClick={() => setTab("letter")}>
+              <span className="tab-icon">💌</span> Letter
+            </button>
           )}
           {CONFIG.heartReasons && CONFIG.heartReasons.length > 0 && (
-            <button className={"tab-btn" + (tab === "hearts" ? " active" : "")} onClick={() => setTab("hearts")}>Hearts</button>
+            <button className={"tab-btn" + (tab === "hearts" ? " active" : "")} onClick={() => setTab("hearts")}>
+              <span className="tab-icon">💖</span> Hearts
+            </button>
           )}
           {CONFIG.chatSnippets && (
-            <button className={"tab-btn" + (tab === "chats" ? " active" : "")} onClick={() => setTab("chats")}>Chats</button>
+            <button className={"tab-btn" + (tab === "chats" ? " active" : "")} onClick={() => setTab("chats")}>
+              <span className="tab-icon">💬</span> Chats
+            </button>
           )}
-          <button className={"tab-btn" + (tab === "wishlist" ? " active" : "")} onClick={() => setTab("wishlist")}>Wishlist</button>
-          <button className={"tab-btn" + (tab === "music" ? " active" : "")} onClick={() => setTab("music")}>Nasheeds</button>
+          <button className={"tab-btn" + (tab === "wishlist" ? " active" : "")} onClick={() => setTab("wishlist")}>
+            <span className="tab-icon">🌟</span> Wishlist
+          </button>
+          <button className={"tab-btn" + (tab === "music" ? " active" : "")} onClick={() => setTab("music")}>
+            <span className="tab-icon">🎵</span> Nasheeds
+          </button>
         </nav>
       </header>
 
       <main>
         <section className={"tab-panel" + (tab === "memories" ? " active" : "")}>
           <ConfettiShower />
-          <h2 className="panel-title">Our Memories</h2>
+          <h2 className="panel-title">Our Moments Together 📸</h2>
+          <p className="panel-subtitle">Every photo carries a piece of my heart</p>
           <MemoriesTab />
         </section>
         {CONFIG.letter && (
