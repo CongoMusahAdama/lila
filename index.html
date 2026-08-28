@@ -151,7 +151,6 @@ function GateScreen({ onBegin, banner }) {
   return (
     <section className="screen screen-gate active" style={bgStyle}>
       <div className="gate-content">
-        <div className="crescent">☾</div>
         <h1 className="gate-heading">Assalamu Alaikum, {CONFIG.herName}</h1>
         {banner && <p className="special-banner">{banner}</p>}
         <p className="subtitle gate-subtitle">A little something made just for you.</p>
@@ -261,6 +260,53 @@ function WelcomeScreen({ banner, onEnter }) {
         <button className="btn-primary" onClick={onEnter}>Enter</button>
       </div>
     </section>
+  );
+}
+
+function ConfettiShower() {
+  const pieces = useMemo(() => {
+    const colors = ["var(--pink)", "var(--pink-deep)", "var(--pink-soft)", "#ffffff"];
+    return Array.from({ length: 26 }).map((_, i) => ({
+      id: i,
+      left: Math.round(Math.random() * 96),
+      delay: (Math.random() * 3).toFixed(2),
+      duration: (2.6 + Math.random() * 2.2).toFixed(2),
+      size: Math.round(5 + Math.random() * 4),
+      color: colors[i % colors.length],
+      isBalloon: i % 5 === 0,
+    }));
+  }, []);
+
+  return (
+    <div className="confetti-shower" aria-hidden="true">
+      {pieces.map((p) =>
+        p.isBalloon ? (
+          <span
+            key={p.id}
+            className="shower-balloon"
+            style={{
+              left: p.left + "%",
+              animationDelay: p.delay + "s",
+              animationDuration: (parseFloat(p.duration) + 1) + "s",
+              background: p.color,
+            }}
+          />
+        ) : (
+          <span
+            key={p.id}
+            className="shower-confetti"
+            style={{
+              left: p.left + "%",
+              animationDelay: p.delay + "s",
+              animationDuration: p.duration + "s",
+              background: p.color,
+              width: p.size + "px",
+              height: Math.round(p.size * 1.6) + "px",
+            }}
+          />
+        )
+      )}
+    </div>
   );
 }
 
@@ -539,6 +585,7 @@ function MainApp({ banner }) {
 
       <main>
         <section className={"tab-panel" + (tab === "memories" ? " active" : "")}>
+          <ConfettiShower />
           <h2 className="panel-title">Our Memories</h2>
           <MemoriesTab />
         </section>
