@@ -21,14 +21,6 @@
 <script type="text/plain" id="app-source">
 const { useState, useEffect, useRef, useMemo, forwardRef, useImperativeHandle } = React;
 
-function normalize(str) {
-  return String(str || "")
-    .toLowerCase()
-    .trim()
-    .replace(/[^\p{L}\p{N}\s]/gu, "")
-    .replace(/\s+/g, " ");
-}
-
 function specialBannerText() {
   const now = new Date();
   const mm = String(now.getMonth() + 1).padStart(2, "0");
@@ -160,79 +152,6 @@ function GateScreen({ onBegin, banner }) {
   );
 }
 
-function QuizScreen({ onDone }) {
-  const quiz = CONFIG.quiz || [];
-  const [index, setIndex] = useState(0);
-  const [value, setValue] = useState("");
-  const [feedback, setFeedback] = useState("");
-  const [feedbackOk, setFeedbackOk] = useState(false);
-  const [wrongAttempts, setWrongAttempts] = useState(0);
-
-  useEffect(() => {
-    if (index >= quiz.length) onDone();
-  }, [index]);
-
-  if (index >= quiz.length) return null;
-
-  function checkAnswer() {
-    const given = normalize(value);
-    const accepted = (quiz[index].answers || []).map(normalize);
-    const correct = accepted.some((a) => a && (given === a || given.includes(a) || a.includes(given)));
-
-    if (correct) {
-      setFeedback("That's right, habibti ✦");
-      setFeedbackOk(true);
-      setTimeout(() => {
-        setIndex((i) => i + 1);
-        setValue("");
-        setFeedback("");
-        setFeedbackOk(false);
-        setWrongAttempts(0);
-      }, 700);
-    } else {
-      setWrongAttempts((n) => n + 1);
-      setFeedback(wrongAttempts + 1 >= 2 ? "Still not quite — you can skip this one." : "Hmm, try again love.");
-      setFeedbackOk(false);
-    }
-  }
-
-  function skip() {
-    setIndex((i) => i + 1);
-    setValue("");
-    setFeedback("");
-    setWrongAttempts(0);
-  }
-
-  return (
-    <section className="screen active">
-      <div className="card">
-        <div className="progress">
-          {quiz.map((_, i) => (
-            <span key={i} className={i < index ? "done" : ""}></span>
-          ))}
-        </div>
-        <h2>{quiz[index].question}</h2>
-        <input
-          id="quiz-input"
-          type="text"
-          placeholder="Type your answer..."
-          autoComplete="off"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && checkAnswer()}
-        />
-        <div className={"quiz-feedback" + (feedbackOk ? " ok" : "")}>{feedback}</div>
-        <div className="quiz-actions">
-          <button className="btn-primary" onClick={checkAnswer}>Answer</button>
-          {wrongAttempts >= 2 && (
-            <button className="btn-ghost" onClick={skip}>Skip this one</button>
-          )}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function renderFormatted(text) {
   return String(text || "")
     .split(/\n\n+/)
@@ -249,6 +168,7 @@ function WelcomeScreen({ banner, onEnter }) {
   return (
     <section className="screen active">
       <div className="card wide">
+        <ConfettiShower />
         {CONFIG.welcomePhoto ? (
           <img className="welcome-photo" src={CONFIG.welcomePhoto} alt="" />
         ) : (
@@ -258,6 +178,32 @@ function WelcomeScreen({ banner, onEnter }) {
         {banner && <p className="special-banner">{banner}</p>}
         <div className="welcome-message">{renderFormatted(CONFIG.welcomeMessage)}</div>
         <button className="btn-primary" onClick={onEnter}>Enter</button>
+      </div>
+    </section>
+  );
+}
+
+function HeartsIntroScreen({ onNext }) {
+  return (
+    <section className="screen intro-scroll-screen active">
+      <div className="card wide">
+        <HeartsGame />
+      </div>
+      <div className="intro-continue-bar">
+        <button className="btn-primary" onClick={onNext}>Continue ✦</button>
+      </div>
+    </section>
+  );
+}
+
+function ChatsIntroScreen({ onNext }) {
+  return (
+    <section className="screen intro-scroll-screen active">
+      <div className="card wide">
+        <ChatsTab />
+      </div>
+      <div className="intro-continue-bar">
+        <button className="btn-primary" onClick={onNext}>Continue ✦</button>
       </div>
     </section>
   );
@@ -429,6 +375,149 @@ function LetterTab() {
   );
 }
 
+function HeartsGame() {
+  const reasons = CONFIG.heartReasons || [];
+  const [hearts] = useState(() =>
+    reasons.map((reason, i) => ({
+      id: i,
+      reason,
+      left: 6 + Math.random() * 80,
+      top: 6 + Math.random() * 68,
+      delay: (Math.random() * 2).toFixed(2),
+      duration: (3 + Math.random() * 2).toFixed(2),
+    }))
+  );
+  const [popped, setPopped] = useState({});
+  const [revealed, setRevealed] = useState([]);
+
+  function pop(heart) {
+    if (popped[heart.id]) return;
+    setPopped((p) => ({ ...p, [heart.id]: true }));
+    setRevealed((r) => [...r, heart.reason]);
+  }
+
+  if (reasons.length === 0) return null;
+  const remaining = reasons.length - revealed.length;
+
+  return (
+    <>
+      <h2 className="panel-title">Pop a Heart 💗</h2>
+      <p className="panel-subtitle">
+        {remaining > 0 ? "Tap each heart to find a reason I love you" : "You found them all 🤍"}
+      </p>
+      <div className="hearts-field">
+        {hearts.map((h) => (
+          <button
+            key={h.id}
+            className={"floating-heart" + (popped[h.id] ? " popped" : "")}
+            style={
+              popped[h.id]
+                ? { left: h.left + "%", top: h.top + "%" }
+                : { left: h.left + "%", top: h.top + "%", animationDuration: h.duration + "s", animationDelay: h.delay + "s" }
+            }
+            onClick={() => pop(h)}
+            aria-label="Pop a heart"
+          >
+            💗
+          </button>
+        ))}
+      </div>
+      {revealed.length > 0 && (
+        <ul className="revealed-list">
+          {revealed.map((r, i) => (
+            <li key={i} className="revealed-item">{r}</li>
+          ))}
+        </ul>
+      )}
+    </>
+  );
+}
+
+function ChatsCarousel({ snippets }) {
+  const trackRef = useRef(null);
+  const itemRefs = useRef([]);
+  const [active, setActive] = useState(0);
+
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
+            const idx = itemRefs.current.indexOf(entry.target);
+            if (idx !== -1) setActive(idx);
+          }
+        });
+      },
+      { root: track, threshold: 0.5 }
+    );
+    itemRefs.current.forEach((el) => el && obs.observe(el));
+    return () => obs.disconnect();
+  }, [snippets.length]);
+
+  function goTo(i) {
+    const el = itemRefs.current[i];
+    if (el) el.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  }
+
+  return (
+    <div className="chats-carousel-wrap">
+      <div className="chats-carousel" ref={trackRef}>
+        {snippets.map((s, i) => (
+          <div
+            className={"carousel-item" + (i === active ? " active-slide" : "")}
+            key={i}
+            ref={(el) => (itemRefs.current[i] = el)}
+          >
+            {s.image ? (
+              <img className="chat-screenshot" src={s.image} alt={s.text || ""} />
+            ) : (
+              <div className={"chat-bubble" + (s.from === "her" ? " chat-bubble-her" : "")}>{s.text}</div>
+            )}
+          </div>
+        ))}
+      </div>
+      <div className="carousel-controls">
+        <button className="carousel-arrow" onClick={() => goTo(active - 1)} disabled={active === 0} aria-label="Previous">‹</button>
+        <div className="carousel-dots">
+          {snippets.map((_, i) => (
+            <span key={i} className={"carousel-dot" + (i === active ? " active" : "")} onClick={() => goTo(i)}></span>
+          ))}
+        </div>
+        <button
+          className="carousel-arrow"
+          onClick={() => goTo(active + 1)}
+          disabled={active === snippets.length - 1}
+          aria-label="Next"
+        >
+          ›
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ChatsTab() {
+  const snippets = CONFIG.chatSnippets || [];
+
+  if (snippets.length === 0) {
+    return (
+      <>
+        <h2 className="panel-title chats-heading">Us, In Our Own Words <span className="chats-heading-icon">💌</span></h2>
+        <p className="empty-hint">Coming soon — a few of our favorite texts, right here.</p>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <h2 className="panel-title chats-heading">Us, In Our Own Words <span className="chats-heading-icon">💌</span></h2>
+      <ChatsCarousel snippets={snippets} />
+    </>
+  );
+}
+
 function loadWishes() {
   try {
     const raw = localStorage.getItem("fadilah-wishlist");
@@ -578,6 +667,12 @@ function MainApp({ banner }) {
           {CONFIG.letter && (
             <button className={"tab-btn" + (tab === "letter" ? " active" : "")} onClick={() => setTab("letter")}>Letter</button>
           )}
+          {CONFIG.heartReasons && CONFIG.heartReasons.length > 0 && (
+            <button className={"tab-btn" + (tab === "hearts" ? " active" : "")} onClick={() => setTab("hearts")}>Hearts</button>
+          )}
+          {CONFIG.chatSnippets && (
+            <button className={"tab-btn" + (tab === "chats" ? " active" : "")} onClick={() => setTab("chats")}>Chats</button>
+          )}
           <button className={"tab-btn" + (tab === "wishlist" ? " active" : "")} onClick={() => setTab("wishlist")}>Wishlist</button>
           <button className={"tab-btn" + (tab === "music" ? " active" : "")} onClick={() => setTab("music")}>Nasheeds</button>
         </nav>
@@ -592,6 +687,16 @@ function MainApp({ banner }) {
         {CONFIG.letter && (
           <section className={"tab-panel" + (tab === "letter" ? " active" : "")}>
             <LetterTab />
+          </section>
+        )}
+        {CONFIG.heartReasons && CONFIG.heartReasons.length > 0 && (
+          <section className={"tab-panel" + (tab === "hearts" ? " active" : "")}>
+            <HeartsGame />
+          </section>
+        )}
+        {CONFIG.chatSnippets && (
+          <section className={"tab-panel" + (tab === "chats" ? " active" : "")}>
+            <ChatsTab />
           </section>
         )}
         <section className={"tab-panel" + (tab === "wishlist" ? " active" : "")}>
@@ -655,7 +760,7 @@ function App() {
 
   function handleBegin() {
     if (duaRef.current) duaRef.current.unmute();
-    setStage("quiz");
+    setStage("hearts");
   }
 
   function handleEnter() {
@@ -669,7 +774,8 @@ function App() {
       <DuaPlayer ref={duaRef} />
       {stage === "achievement" && <AchievementScreen onNext={handleAchievementNext} />}
       {stage === "gate" && <GateScreen onBegin={handleBegin} banner={banner} />}
-      {stage === "quiz" && <QuizScreen onDone={() => setStage("welcome")} />}
+      {stage === "hearts" && <HeartsIntroScreen onNext={() => setStage("chats")} />}
+      {stage === "chats" && <ChatsIntroScreen onNext={() => setStage("welcome")} />}
       {stage === "welcome" && <WelcomeScreen banner={banner} onEnter={handleEnter} />}
       {stage === "video" && <VideoScreen srcs={CONFIG.introVideos} onDone={() => setStage("app")} />}
       {stage === "app" && <MainApp banner={banner} />}

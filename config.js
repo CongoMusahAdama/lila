@@ -39,29 +39,7 @@ const CONFIG = {
   // A small photo of her shown at the top of the welcome/birthday message screen.
   welcomePhoto: "images/5591b8ed-fc74-48b3-8699-9c0ef9f46fa0.jpg",
 
-  // EDIT ME: the quiz she answers before getting in.
-  // "answers" is a list of acceptable answers (lowercase, she can be a little off
-  // and still get it right — matching ignores case/extra spaces/punctuation).
-  quiz: [
-    {
-      question: "Where did we first meet?", // EDIT ME
-      answers: ["edit me"], // EDIT ME: put the real answer(s)
-    },
-    {
-      question: "What do I call you the most?", // EDIT ME
-      answers: ["edit me"], // EDIT ME: her nickname, e.g. ["habibti", "love"]
-    },
-    {
-      question: "What's something that's just ours — no one else's?", // EDIT ME
-      answers: ["edit me"], // EDIT ME: an inside joke, a song, a spot, a word
-    },
-    {
-      question: "Where did we go on our first trip together?", // EDIT ME
-      answers: ["edit me"], // EDIT ME: e.g. ["aburi gardens", "aburi"]
-    },
-  ],
-
-  // The welcome message she sees after the quiz. Supports **bold** for emphasis
+  // The welcome message she sees after popping the balloon. Supports **bold** for emphasis
   // and blank lines for new paragraphs.
   welcomeMessage:
     "**Happy Birthday, my Fadilah ❤️**\n\n" +
@@ -117,6 +95,35 @@ const CONFIG = {
       "I just hope we can find our way back to that again.",
     signature: "Always yours.",
   },
+
+  // Reasons shown in the "Hearts" tab — she pops a floating heart and one is
+  // revealed at a time. EDIT ME: make these as specific/personal as you like.
+  heartReasons: [
+    "The way your eyes light up when you talk about something you love",
+    "How gentle you are, even on days you don't feel like being gentle",
+    "Your laugh — I could listen to it all day",
+    "How strong you are, even when you don't feel strong",
+    "The way you care for people without expecting anything back",
+    "How you always find a way to make me smile",
+    "Your iman — the way you hold onto Allah through everything",
+    "Just... you. All of you.",
+  ],
+
+  // Favorite bits of your chat — a separate tab from Memories. Each item is either
+  // { image: "images/chat1.png" } for a screenshot, or { text: "...", from: "you"
+  // | "her" } for a typed-out quote (from: "her" aligns it to the other side, like
+  // a real chat). The "Chats" tab shows now with a "coming soon" note — fill this
+  // in whenever you're ready and it'll switch over automatically.
+  chatSnippets: [
+    { image: "images/chat.jpg" },
+    { image: "images/chat1.jpg" },
+    { image: "images/chat2.jpg" },
+    { image: "images/chat3.jpg" },
+    { image: "images/chat4.jpg" },
+    { image: "images/chat5.jpg" },
+    { image: "images/chat6.jpg" },
+    { image: "images/chat8.jpg" },
+  ],
 
   // Starter wishlist items (optional). She can add/remove her own after this.
   wishlistSeed: [
